@@ -1,0 +1,13 @@
+{
+  "manifest_version": 2,
+
+  "name": "A bitcointalk Chrome extension",
+  "version": "0.3.2",
+  "description": "Hide posts already read and other stuff. Developing more features.",
+  "content_scripts": [
+    {
+      "matches": ["https://bitcointalk.org/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
