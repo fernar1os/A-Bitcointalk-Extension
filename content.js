@@ -24,52 +24,31 @@
  * 
 */
 
-
-var element, element2;
-var counter = 0, counter2 = 0, i, j;
-var function_toggle;
-var last_read = 0, new_last_read = 0;
-var str_message;
-var message_id;
-var message_display;
-var topic_id = "-1";
-var string_index, string_end, string_index2, string_index3, string_end3, string_length;
-var post_resume, author_name;
-var post_resume_display;
-var post_date;
-var post_buttons;
-var actual_page, last_page;
-var last_at_top, message_id_1, message_id_2;
-var previous;
-var element_width;
-var post_element;
-
 var change_style = true;
-
-var mark_unread_url;
 
 var username;
 var url_vars;
-var url_board_index;
-var string_end;
-var board_id = "-1";
 var time_counter = 0;
 
-var symbol_ready = "<b>&#9745;</b>";//"<b>&#10004;</b>";
-var symbol_box = "<b>&#9744;</b>";//"<b>&#164;</b>";
+var symbol_ready = "<b>&#9745;</b>";
+var symbol_box = "<b>&#9744;</b>";
 var symbol_loading = "<span>&#8635;</span>"
 var symbol_reaload = "<span>&#10227;</span>";
+
 var link_color;
 var link_ignored_color;
 var bg_color;
 var font_color;
 
-if(change_style){
+if(change_style)
+{
     link_color = "#476C8E";
     link_ignored_color = "#585858";
     bg_color = "#0A2229";
     font_color = "#B4B4B4";
-}else{
+}
+else
+{
     link_color = "#476C8E";
     link_ignored_color = "#ACABAD";
     bg_color = "#E5E5E8";
@@ -77,30 +56,34 @@ if(change_style){
 }
 
 username = document.getElementById("hellomember");							// Getting user name
-if(username != null){
+if(username != null)
+{
     username = document.getElementById("hellomember").innerHTML;
     username = username.substring(username.indexOf("<b>") + 3, username.indexOf("</b>"));
-}else{
+}
+else
+{
     username = "anonuser";
 }
 
 url_vars = window.location.search;									// Reading current url
 
-url_board_index = url_vars.indexOf("board=");
-if(url_board_index >= 0){										// Currently in a board page
-    string_end = url_vars.indexOf(".", url_board_index);
-    board_id = url_vars.substring(url_board_index + 6, string_end);
+var url_board_index = url_vars.indexOf("board=");
+if(url_board_index >= 0)
+{													// Currently in a board page
+    var string_end = url_vars.indexOf(".", url_board_index);
+    var board_id = url_vars.substring(url_board_index + 6, string_end);
     change_board_page(document, board_id);
     
     insert_footer(document);
     changeStyles(document);										// Changing styles of current page
 }
 
-url_topic_index = url_vars.indexOf("topic=");
+var url_topic_index = url_vars.indexOf("topic=");
 if(url_topic_index >= 0)										// Currently in a topic page
 {
-    topic_id = url_vars.substring(url_topic_index + 6);
-    string_end = topic_id.indexOf(".");
+    var topic_id = url_vars.substring(url_topic_index + 6);
+    var string_end = topic_id.indexOf(".");
     topic_id = topic_id.substring(0, string_end);
     change_topic_page(document, topic_id);
     
@@ -110,140 +93,38 @@ if(url_topic_index >= 0)										// Currently in a topic page
 
 function change_topic_page(doc_element, topic_id)							// Apply extension changes to topic page elements
 {
-    // Define if showing most recent post at the top
-    element = doc_element.querySelectorAll(".message_number");
+    var element;
+    var counter;
+    var function_toggle;
+    var last_read = 0, new_last_read = 0;
+    var str_message, message_id, message_display;
+    var topic_id;
+    var post_resume, author_name, post_resume_display;
+    var post_date, post_buttons, post_element;
+    var mark_unread_url;
     
-    last_at_top = localStorage.getItem(username + "_LastAtTop");
-    if(last_at_top == null){
-	localStorage.setItem(username + "_LastAtTop", "No");
+    last_read = localStorage.getItem(username + "_T_" + topic_id + "_LPo");				// Getting last read post
+    if(last_read == null)
+    {
+	last_read = 0;
     }
-    
-    if(element.length > 1){
- 	message_id_1 = element.item(element.length - 2).innerHTML.substring(element.item(element.length - 2).innerHTML.indexOf("#") + 1);
- 	message_id_2 = element.item(element.length - 1).innerHTML.substring(element.item(element.length - 1).innerHTML.indexOf("#") + 1);
-	if(parseInt(message_id_1) > parseInt(message_id_2)){
-	    localStorage.setItem(username + "_LastAtTop", "Yes");
-	}else{
-	    localStorage.setItem(username + "_LastAtTop", "No");
-	}
-    }
-    
+	    
     element = doc_element.querySelectorAll(".windowbg, .windowbg2");
     
-    // For each post
-    for(counter = 0; counter < element.length; counter++)
+    for(counter = 0; counter < element.length; counter++)						// For each post
     {
-	if(element.item(counter).getElementsByClassName("td_headerandpost").item(0) != null)
+	if(element[counter].getElementsByClassName("td_headerandpost")[0] != null)
 	{
-	    element.item(counter).style.fontWeight = "normal";
+	    post_element = element[counter];
 	    
-	    // Youtube embed
-	    string_index = element.item(counter).innerHTML.indexOf("youtube.com/watch?v=");
+	    post_element.style.fontWeight = "normal";							// Sometimes font-weight is natively setting "bold" in some parent class (apparently without reason)
 	    
-	    while(string_index >= 0){
-		string_index = string_index + 20;
-		string_content = element.item(counter).innerHTML.substring(string_index, string_index + 11);
-		
-		if(element.item(counter).innerHTML.substring(string_index + 11, string_index + 15) == "</a>"){
-		    string_content = "" +
-			"<br><iframe width='640' height='360' src='" +
-			"https://www.youtube.com/embed/" +
-			string_content + "'></iframe><br>";
-			
-		    insert_string_code(element.item(counter), string_content, string_index + 15, string_index + 15);
-		}
-		
-		string_index2 = element.item(counter).innerHTML.indexOf("youtube.com/watch?v=", string_index);
-		if(string_index2 > string_index){
-		    string_index = string_index2;
-		}else{
-		    string_index = -1;
-		}
-	    }
-	    string_index = element.item(counter).innerHTML.indexOf("youtu.be/");
-	    while(string_index >= 0){
-		string_index = string_index + 9;
-		string_content = element.item(counter).innerHTML.substring(string_index, string_index + 11);
-		
-		if(element.item(counter).innerHTML.substring(string_index + 11, string_index + 15) == "</a>"){
-		    string_content = "" +
-			"<br><iframe width='640' height='360' src='" +
-			"https://www.youtube.com/embed/" +
-			string_content + "'></iframe><br>";
-			
-		    insert_string_code(element.item(counter), string_content, string_index + 15, string_index + 15);
-		}
-		
-		string_index2 = element.item(counter).innerHTML.indexOf("youtu.be/", string_index);
-		if(string_index2 > string_index){
-		    string_index = string_index2;
-		}else{
-		    string_index = -1;
-		}
-	    }
+	    embed_youtube_links(post_element);								// Youtube embed
 	    
-	    // Bitcoin Address detection
-	    post_element = element.item(counter);
-	    if(post_element != null){
-		var regex = /[^a-zA-Z0-9]/;
-		var patt = new RegExp(regex);
-		var a_index_array = [];
-		var a_index_counter;
-		
-		// read positions of all links (content between <a  and </a>)
-		searchLinks(post_element, a_index_array);
-		
-		//Search and replace all Bitcoin address with link to blockchain.info
-		string_index = post_element.innerHTML.indexOf("1");
-		string_index3 = post_element.innerHTML.indexOf("3");
-		if(string_index3 < string_index){
-		    string_index = string_index3;
-		}
-		
-		while(string_index >= 0){
-		    string_content = post_element.innerHTML.substring(string_index, string_index + 27);
-		    if (!patt.test(string_content)){
-			for(i = 28; i <= 34; i++){
-			    string_content = post_element.innerHTML.substring(string_index, string_index + i);
-			    if (patt.test(string_content)){
-				break;
-			    }
-			}
-			string_length = i - 1;
-			string_content = post_element.innerHTML.substring(string_index, string_index + string_length)
-			
-			if(!between(string_index, a_index_array)){
-			    string_content = "" +
-				"<a href='https://blockchain.info/address/" +
-				string_content +
-				"' target='_blank'>" +
-				string_content + "</a>";
-			    
-			    insert_string_code(post_element, string_content, string_index, string_index + string_length);
-			    
-			    searchLinks(post_element, a_index_array);
-			}
-			
-			
-		    }else{
-			string_content = "N";
-		    }
-		    string_index2 = post_element.innerHTML.indexOf("1", string_index + string_content.length);
-		    string_index3 = post_element.innerHTML.indexOf("3", string_index + string_content.length);
-		    if(string_index3 > 0 && (string_index3 < string_index2 || string_index2 < 0)){
-			string_index2 = string_index3;
-		    }
-		    if(string_index2 > string_index){
-			string_index = string_index2;
-		    }else{
-			string_index = -1;
-		    }
-		}
-	    }
+	    btc_address_to_link(post_element);									// Bitcoin Address detection and linking to blockchain.info
 	    
 	    
-	    // Hide post
-	    function_toggle = "" +
+	    function_toggle = "" +									// Hide post toggle function
 		"if(document.getElementById(\"toggleText" + counter +"\").style.display == \"block\")"+
 		"{"+
 		    "document.getElementById(\"toggleText" + counter + "\").style.display = \"none\";"+
@@ -254,90 +135,193 @@ function change_topic_page(doc_element, topic_id)							// Apply extension chang
 		    ""+
 		"}";
 	    
-	    author_name = element.item(counter).getElementsByClassName("poster_info").item(0).textContent.toString();
+	    author_name = post_element.getElementsByClassName("poster_info")[0].textContent.toString();
 	    author_name = author_name.substring(1);
 	    author_name = author_name.substring(0, author_name.indexOf("\n"));
 	    
-	    post_resume = "<table width='100%' border = '0'><tr>" +
-		"<td><b>" + author_name + "</b>: " +
-		element.item(counter).getElementsByClassName("post").item(0).textContent.toString();
+	    str_message = post_element.getElementsByClassName("message_number")[0].toString();
+	    message_id = str_message.substring(str_message.indexOf("#msg") + 4);
+	    
+	    if(parseInt(message_id) <= parseInt(last_read))						// Hiding read post
+	    {
+		message_display = "none";
+		post_resume_display = "block";
+	    }
+	    else
+	    {
+		if(parseInt(message_id) < 1000000000)							// There are some weird hidden post with id over 1400000000 (aparently purposeless)
+		{
+		    message_display = "block";								// Showing unread post
+		    post_resume_display = "none";
+		    if(new_last_read < parseInt(message_id))
+		    {
+			new_last_read = parseInt(message_id);
+		    }
+		}
+	    }
+	    
+	    post_resume = "<table width='100%' border = '0'><tr><td><b>" + author_name + "</b>: " +	// Post resume for hiding post div
+		post_element.getElementsByClassName("post")[0].textContent.toString();
 	    
 	    if(post_resume.length > 195){
 		post_resume = post_resume.substring(0,190);
 		post_resume = post_resume + "<b>(...)</b></td>";
 	    }
 	    
-	    str_message = element.item(counter).getElementsByClassName("message_number").item(0).toString();
-	    message_id = str_message.substring(str_message.indexOf("#msg") + 4);
-	    
-	    last_read = 0;
-	    last_read = localStorage.getItem(username + "_T_" + topic_id + "_LPo");
-	    
-	    if(last_read == null){
-		last_read = 0;
-	    }
-	    if(parseInt(message_id) <= parseInt(last_read)){
-		message_display = "none";
-		post_resume_display = "block";
-	    }else{
-		message_display = "block";
-		post_resume_display = "none";
-	    }
-	    
-	    post_date = element.item(counter).getElementsByClassName("td_headerandpost").item(0);
-	    post_date = post_date.getElementsByClassName("smalltext").item(0).textContent.toString();
+	    post_date = post_element.getElementsByClassName("td_headerandpost")[0];			// Getting post date for resume
+	    post_date = post_date.getElementsByClassName("smalltext")[0].textContent.toString();
 	    post_date = "<td align='right'>" + post_date + "</td></tr></table>";
-	    post_resume = post_resume + post_date;
+	    post_resume = post_resume + post_date;							// Inserting post date in resume
 	    
-	    element.item(counter).innerHTML = "<div id='displayText" + counter + "' onclick='" + function_toggle +
+	    post_element.innerHTML = "<div id='displayText" + counter + "' onclick='" + function_toggle +
 		"' style='display: " + post_resume_display + "'>" + post_resume + "</div><div id='toggleText" + counter +
-		"' style='display: " + message_display + "'>" + element.item(counter).innerHTML + "</div>";
-	    
-	    if(parseInt(message_id) >= 1000000000){							// Hide weird posts (generated natively apparently without purpose)
-		element.item(counter).parentNode.parentNode.parentNode.style.display = "none";
-	    }
+		"' style='display: " + message_display + "'>" + post_element.innerHTML + "</div>";
 	    
 	    mark_unread_url = doc_element.getElementsByClassName("mirrortab_back")[0];			// Getting mark unread native url
 	    mark_unread_url = get_element_with_string_in_attribute(mark_unread_url, "tag", "a", "?action=markasread;", "href", 0);
 	    mark_unread_url = mark_unread_url.href;
 	    
 	    
-	    fuction_mark_unread = "" +									 // Mark Unread From Here Function
+	    fuction_mark_unread = "" +									 // "mark unread" post function
 		"localStorage.setItem(\"" + username + "_T_" + topic_id + "_LPo" + "\", parseInt(" + message_id + ")-1);" +
-		"document.getElementById(\"button_mark_unread_" + message_id +"\").innerHTML = \"| <b style=\\\"cursor:pointer;\\\">" + symbol_loading + " marking unread...</b>" + 
+		"document.getElementById(\"button_mark_unread_" + message_id +"\").innerHTML = \"| " +
+		"<b style=\\\"cursor:pointer;\\\">" + symbol_loading + " marking unread...</b>" + 
 		"<div class=\\\"mark_unread_loading_mark_text\\\" style=\\\"display: none;\\\">" + message_id + "</div>" +
 		"<div id=\\\"mark_unread_loading_mark_url_" + message_id + "\\\" style=\\\"display: none;\\\">" + mark_unread_url + "</div>" +
 		"\";";
 	    
-													// Inserting Hide and Mark Unread buttons
-	    post_buttons = element.item(counter).getElementsByClassName("td_buttons").item(0);
+	    post_buttons = post_element.getElementsByClassName("td_buttons")[0];			// Inserting "hide" and "mark unread" post buttons
 	    post_buttons.innerHTML = "<table align='right' border='0'><tr>" +
 		"<td style='white-space: nowrap'><div id='button_mark_unread_" + message_id + "' onclick='" + fuction_mark_unread + "'>" +
 		"| <b style=\"cursor:pointer;\">&#8224; mark unread</b></div></td>" +
 		"<td style='white-space: nowrap'> | </td>" +
-		"<td style='white-space: nowrap'><div onclick='" + function_toggle + "'><b style=\"cursor:pointer;\">&#8225; hide |</div></b></td>" +
+		"<td style='white-space: nowrap'><div onclick='" + function_toggle + "'>" +
+		"<b style=\"cursor:pointer;\">&#8225; hide |</div></b></td>" +
 		"<td align='right' style='white-space: nowrap'>" + post_buttons.innerHTML + "</td></tr></table>";
 	}
     }
     
-    // Set last read post
-    element = doc_element.querySelectorAll(".message_number");
-    new_last_read = 0;
-    if(element.length > 0){
-	if(localStorage.getItem(username + "_LastAtTop") == "Yes"){
-	    str_message = element.item(0).toString();
-	}else{
-	    str_message = element.item(element.length - 1).toString();
-	}
-	new_last_read = str_message.substring(str_message.indexOf("#msg") + 4);
-    }
-    last_read = localStorage.getItem(username + "_T_" + topic_id + "_LPo");
-    if(last_read == null){
-	last_read = "0";
+    if(parseInt(last_read) < new_last_read){
+	localStorage.setItem(username + "_T_" + topic_id + "_LPo", new_last_read);			// Setting last read post
     }
     
-    if(parseInt(new_last_read) > parseInt(last_read)){
-    	localStorage.setItem(username + "_T_" + topic_id + "_LPo", new_last_read);
+}
+
+function embed_youtube_links(element)
+{
+    var link_elements;
+    var counter;
+    var string_index, string_content;
+    
+    link_elements =  element.getElementsByTagName("a");							// Getting <a ...> elements
+	    
+    counter = 0;
+    while(link_elements[counter] != null)								// For each link
+    {
+	string_index = -1;
+	
+	string_index = link_elements[counter].href.indexOf("youtube.com/watch");			// Searching youtube.com in href
+	if(string_index >= 0)
+	{
+	    string_index = string_index + 17;
+	    string_index = link_elements[counter].href.indexOf("v=", string_index);
+	    if(string_index > 0)
+	    {
+		string_index = string_index + 2;
+	    }
+	    else
+	    {
+		string_index = -1;
+	    }
+	}
+	
+	if(string_index < 0)
+	{
+	    string_index = link_elements[counter].href.indexOf("youtu.be/");				// Searching youtu.be in href
+	    if(string_index >= 0)
+	    {
+		string_index = string_index + 9;
+	    }
+	}
+	
+	if(string_index >= 0)										// Youtube link found
+	{
+	    string_content = link_elements[counter].href.substring(string_index);
+	    
+	    string_content = "<br><embed width='640' height='360' " +					// iframe embed element
+		"src='https://www.youtube.com/v/" + string_content +
+		"' type=\"application/x-shockwave-flash\"></iframe><br>";
+		
+	    link_elements[counter].outerHTML += string_content;						// Inserting iframe string
+	}
+	
+	counter++;
+    }
+}
+
+function btc_address_to_link(element)
+{
+    var string_index, string_content;
+    var regex = /[^a-zA-Z0-9]/;
+    var patt = new RegExp(regex);
+    var a_index_array = [];
+    var i;
+    var string_index2, string_index3, string_length;
+    
+    searchLinks(element, a_index_array);								// read positions of all links (content between <a  and </a>)
+    
+    string_index = element.innerHTML.indexOf("1");							//Search and replace all Bitcoin address with link to blockchain.info
+    string_index3 = element.innerHTML.indexOf("3");
+    if(string_index3 < string_index){
+	string_index = string_index3;
+    }
+    
+    while(string_index >= 0){
+	string_content = element.innerHTML.substring(string_index, string_index + 27);
+	if (!patt.test(string_content))
+	{
+	    for(i = 28; i <= 34; i++)
+	    {
+		string_content = element.innerHTML.substring(string_index, string_index + i);
+		if (patt.test(string_content))
+		{
+		    break;
+		}
+	    }
+	    string_length = i - 1;
+	    string_content = element.innerHTML.substring(string_index, string_index + string_length)
+	    
+	    if(!between(string_index, a_index_array))
+	    {
+		string_content = "<a href='https://blockchain.info/address/" + string_content +
+		    "' target='_blank'>" + string_content + "</a>";
+		
+		insert_string_code(element, string_content, string_index, string_index + string_length);
+		
+		searchLinks(element, a_index_array);
+	    }
+	    
+	    
+	}
+	else
+	{
+	    string_content = "N";
+	}
+	
+	string_index2 = element.innerHTML.indexOf("1", string_index + string_content.length);
+	string_index3 = element.innerHTML.indexOf("3", string_index + string_content.length);
+	if(string_index3 > 0 && (string_index3 < string_index2 || string_index2 < 0))
+	{
+	    string_index2 = string_index3;
+	}
+	if(string_index2 > string_index)
+	{
+	    string_index = string_index2;
+	}
+	else
+	{
+	    string_index = -1;
+	}
     }
 }
 
@@ -349,11 +333,13 @@ function change_board_page(doc_element, board_id)
     child_boards_table = get_element_with_string_in_attribute(doc_element, "tag", "table", ">Child Boards</td>", "innerHTML", 0);
     topics_table = get_topics_table(doc_element);
     
-    if(child_boards_table != null){
+    if(child_boards_table != null)
+    {
 	change_child_boards_table(child_boards_table);							// Changing child boards table
     }
     
-    if(topics_table != null){
+    if(topics_table != null)
+    {
 	change_topics_table(topics_table, board_id);							// Changing topics table
     }
 }
@@ -369,7 +355,7 @@ function get_topics_table(doc_element)
 
 function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Insert overlay topic div container
 {
-    var string_code, string_code2, string_index;
+    var string_code, string_code2;
     var overlay_topic;
     var body_element;
     var element;
@@ -384,11 +370,12 @@ function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Inse
 	insert_string_code(parent_body, string_code, parent_body.innerHTML.length - 1, parent_body.innerHTML.length - 1);
     
     overlay_topic_div = document.getElementById("overlay_topic");
-    if(overlay_topic_div != null){
+    if(overlay_topic_div != null)
+    {
 	insert_footer(doc_element);
 	changeStyles(doc_element);
 	body_element = doc_element.getElementsByTagName("body")[0];
-	overlay_topic_div.style.backgroundColor = bg_color;
+	overlay_topic_div.style.backgroundColor = bg_color;						// Style settings for overlay topic
 	overlay_topic_div.style.marginLeft = "10px";
 	overlay_topic_div.style.marginRight = "10px";
 	overlay_topic_div.style.paddingLeft = "30px";
@@ -446,7 +433,7 @@ function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Inse
 	
 	var function_page = "this.innerHTML = \"[" + symbol_loading + "]<div class=\\\"mark_read_span_loading_mark_text\\\" " +
 	    "style=\\\"display: none;\\\">";
-	convert_link_tag_to_span_onclik(element, function_page, "</div>\";", 1000);// Changing page links
+	convert_link_tag_to_span_onclik(element, function_page, "</div>\";", 1000);			// Changing page links
 	
 	element = get_element_with_string_in_attribute(body_element, "class", "middletext", "Pages:", "textContent", 1);
 	
@@ -454,7 +441,7 @@ function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Inse
 	    "cursor:pointer;\" " + string_code2 + close_button_tex + string_code3;
 	insert_string_code(element, string_code, 0, 0);
 	
-	convert_link_tag_to_span_onclik(element, function_page, "</div>\";", 1000);// Changing page links
+	convert_link_tag_to_span_onclik(element, function_page, "</div>\";", 1000);			// Changing page links
 	
 	element = body_element.getElementsByTagName("a");
 	counter = 0;
@@ -530,53 +517,53 @@ function convert_link_tag_to_span_onclik(element, onclick_function_1, onclick_fu
 }
 
 function get_element_with_string_in_attribute(doc_element, element_type, element_type_text, match_text, attribute, index)
-{												// Return found element number 'index', search given match_text in attribute of elements with given element_type_text as element_type
+{													// Return found element number 'index', search given match_text in attribute of elements with given element_type_text as element_type
     var elements;
     var counter;
     var index_counter;
     
     if(element_type == "tag"){
-	elements = doc_element.getElementsByTagName(element_type_text);				// Getting element by tag name
+	elements = doc_element.getElementsByTagName(element_type_text);					// Getting element by tag name
     }else if(element_type == "class"){
-	elements = doc_element.getElementsByClassName(element_type_text);			// Getting element by class name
+	elements = doc_element.getElementsByClassName(element_type_text);				// Getting element by class name
     }else{
 	return(null);
     }
     
     counter = 0;
     index_counter = 0;
-    while(elements[counter] != null)								// For each element
+    while(elements[counter] != null)									// For each element
     {
 	if(attribute == "innerHTML"){
-	    if(elements[counter].innerHTML.indexOf(match_text) >= 0){				// Searching in .innerHTML attribute
+	    if(elements[counter].innerHTML.indexOf(match_text) >= 0){					// Searching in .innerHTML attribute
 		if(index_counter >= index){
 		    return(elements[counter]);
 		}
 		index_counter++;
 	    }
 	}else if(attribute == "href"){
-	    if(elements[counter].href.indexOf(match_text) >= 0){				// Searching in .href attribute
+	    if(elements[counter].href.indexOf(match_text) >= 0){					// Searching in .href attribute
 		if(index_counter >= index){
 		    return(elements[counter]);
 		}
 		index_counter++;
 	    }
 	}else if(attribute == "className"){
-	    if(elements[counter].className.indexOf(match_text) >= 0){				// Searching in .href attribute
+	    if(elements[counter].className.indexOf(match_text) >= 0){					// Searching in .href attribute
 		if(index_counter >= index){
 		    return(elements[counter]);
 		}
 		index_counter++;
 	    }
 	}else if(attribute == "id"){
-	    if(elements[counter].id.indexOf(match_text) >= 0){					// Searching in .href attribute
+	    if(elements[counter].id.indexOf(match_text) >= 0){						// Searching in .href attribute
 		if(index_counter >= index){
 		    return(elements[counter]);
 		}
 		index_counter++;
 	    }
 	}else if(attribute == "textContent"){
-	    if(elements[counter].textContent.indexOf(match_text) >= 0){				// Searching in .textContent attribute
+	    if(elements[counter].textContent.indexOf(match_text) >= 0){					// Searching in .textContent attribute
 		if(index_counter >= index){
 		    return(elements[counter]);
 		}
@@ -612,7 +599,7 @@ function change_child_boards_table(table_element)
 	    if(td_elements[3] != null){
 		string_index = string_index + 21;
 		string_index2 = td_elements[0].innerHTML.indexOf(".", string_index);
-		board_id = td_elements[0].innerHTML.substring(string_index, string_index2);
+		var board_id = td_elements[0].innerHTML.substring(string_index, string_index2);
 		
 		cascade = localStorage.getItem(username + "_B_" + board_id + "_CBo");			// Reading cascade state
 		if(cascade != "true"){
@@ -1022,13 +1009,13 @@ function call_board_table_on_reload(table_element, board_id)
 	    var topics_table = get_topics_table(doc_element_return);
 	    
 	    if(topics_table != null){
-		change_topics_table(topics_table, board_id);							// Changing topics table
+		change_topics_table(topics_table, board_id);						// Changing topics table
 		changeStyles(topics_table);
 		table_element.outerHTML = topics_table.outerHTML;
 	    }
 	}
     }
-    xmlhttp.open("GET", "index.php?board=" + board_id + ".0", true);						// Opening child board bage request
+    xmlhttp.open("GET", "index.php?board=" + board_id + ".0", true);					// Opening child board bage request
     xmlhttp.send();
 }
 
@@ -1188,7 +1175,8 @@ function printf(string){										// Short function for console log printings de
     console.log(string);
 }
 
-function between(number, array){
+function between(number, array)
+{
     for(i = 0; i < array.length; i = i + 2){
 	if(array[i] != undefined && array[i+1] != undefined){
 	    if(number > array[i] && number < array[i+1]){
@@ -1201,11 +1189,13 @@ function between(number, array){
     return(false);
 }
 
-function searchLinks(element, a_index_array){
+function searchLinks(element, a_index_array)
+{
     var string_index, string_index2, string_index3;
+    var a_index_counter;
     
-    string_index = post_element.innerHTML.indexOf("<a ");
-    string_index3 = post_element.innerHTML.indexOf("</a>");
+    string_index = element.innerHTML.indexOf("<a ");
+    string_index3 = element.innerHTML.indexOf("</a>");
     if(string_index3 < string_index){
 	string_index = string_index3;
     }
@@ -1216,8 +1206,8 @@ function searchLinks(element, a_index_array){
 	a_index_array[a_index_counter] = string_index;
 	a_index_counter++;
 	
-	string_index2 = post_element.innerHTML.indexOf("<a ", string_index + 1);
-	string_index3 = post_element.innerHTML.indexOf("</a>", string_index + 1);
+	string_index2 = element.innerHTML.indexOf("<a ", string_index + 1);
+	string_index3 = element.innerHTML.indexOf("</a>", string_index + 1);
 	
 	if(string_index3 > 0 && (string_index3 < string_index2 || string_index2 < 0)){
 	    string_index2 = string_index3;
@@ -1234,12 +1224,15 @@ function searchLinks(element, a_index_array){
 
 function changeStyles(doc_element)
 {
+    var element;
+    var counter;
+    
     if(change_style == true)
     {
 	element = doc_element.getElementsByTagName("tbody");
 	counter = 0;
 	while(element[counter] != null){
-	    element[counter].style.backgroundColor = bg_color;					// Setting tbody background extension color
+	    element[counter].style.backgroundColor = bg_color;						// Setting tbody background extension color
 	    counter++;
 	}
 	
@@ -1253,21 +1246,21 @@ function changeStyles(doc_element)
 	element = doc_element.getElementsByTagName("body");
 	counter = 0;
 	while(element[counter] != null){
-	    element[counter].style.backgroundColor = bg_color;					// Setting body background extension color
+	    element[counter].style.backgroundColor = bg_color;						// Setting body background extension color
 	    counter++;
 	}
 	
 	element = doc_element.querySelectorAll(".windowbg, .windowbg2, .windowbg3");
 	counter = 0;
 	while(element[counter] != null){
-	    element[counter].style.backgroundColor = bg_color;					// Setting post background extension color
+	    element[counter].style.backgroundColor = bg_color;						// Setting post background extension color
 	    counter++;
 	}
 	
 	element = doc_element.getElementsByTagName("td");
 	counter = 0;
 	while(element[counter] != null){
-	    element[counter].style.backgroundColor = bg_color;					// Setting table td background extension color
+	    element[counter].style.backgroundColor = bg_color;						// Setting table td background extension color
 	    element[counter].style.color = font_color;							// Setting table td font extension color
 	    counter++;
 	}
@@ -1289,7 +1282,7 @@ function changeStyles(doc_element)
 	element = doc_element.getElementsByClassName("quote");
 	counter = 0;
 	while(element[counter] != null){
-	    element[counter].style.backgroundColor = bg_color;					// Setting quote background extension color
+	    element[counter].style.backgroundColor = bg_color;						// Setting quote background extension color
 	    element[counter].style.color = font_color;							// Setting quote font extension color
 	    counter++;
 	}
@@ -1298,12 +1291,15 @@ function changeStyles(doc_element)
 
 function window_onload()										// Removing "height: 20px;" post property  (it's set by onload native function)
 {
+    var element;
+    var counter;
+    
     element = document.querySelectorAll(".windowbg, .windowbg2");					// Getting post elements
     
     for(counter = 0; counter < element.length; counter++)
     {
-	if(element.item(counter).getElementsByClassName("td_headerandpost").item(0) != null){		// Removing "style=\"height: 20px;\"" string
-	    element.item(counter).innerHTML = element.item(counter).innerHTML.replace(/style=\"height: 20px;\"/g, "");
+	if(element[counter].getElementsByClassName("td_headerandpost")[0] != null){			// Removing "style=\"height: 20px;\"" string
+	    element[counter].innerHTML = element[counter].innerHTML.replace(/style=\"height: 20px;\"/g, "");
 	}
     }
 }
