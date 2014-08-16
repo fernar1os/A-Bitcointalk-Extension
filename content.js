@@ -1388,7 +1388,7 @@ function insert_footer(doc_element)
     {
 	var spanish_thread = "<a href=\"https://bitcointalk.org/index.php?topic=708721.0\" target=\"_blank\">Spanish Thread</a>";
 	var english_thread = "<a href=\"https://bitcointalk.org/index.php?topic=708721.0\" target=\"_blank\">English Thread</a>";	// FIXME
-	var download_link = "<a href=\"https://github.com/fernar1os/A-Bitcointalk-Extension\">Download source</a> (\"Download ZIP\" in bottom left corner)";
+	var download_link = "<a href=\"https://github.com/fernar1os/A-Bitcointalk-Extension\">Download source</a> (\"Download ZIP\" in bottom right corner)";
 	
 	footerarea_element.outerHTML += "<center><div style=\"color:" + font_color +
 	    ";border:1px; border-style:solid; border-color:" + font_color + "; padding:4px;\"> " +
