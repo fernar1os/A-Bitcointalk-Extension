@@ -30,6 +30,9 @@ var username;
 var url_vars;
 var time_counter = 0;
 
+var max_msg_id = 99999999999;
+var days_to_clean_storage = 30;
+
 var symbol_ready = "<b>&#9745;</b>";
 var symbol_box = "<b>&#9744;</b>";
 var symbol_loading = "<span>&#8635;</span>"
@@ -103,7 +106,7 @@ function change_topic_page(doc_element, topic_id)							// Apply extension chang
     var post_date, post_buttons, post_element;
     var mark_unread_url;
     
-    last_read = localStorage.getItem(username + "_T_" + topic_id + "_LPo");				// Getting last read post
+    last_read = local_storage_get_item(username + "_T_" + topic_id + "_LPo");				// Getting last read post
     if(last_read == null)
     {
 	last_read = 0;
@@ -142,14 +145,14 @@ function change_topic_page(doc_element, topic_id)							// Apply extension chang
 	    str_message = post_element.getElementsByClassName("message_number")[0].toString();
 	    message_id = str_message.substring(str_message.indexOf("#msg") + 4);
 	    
-	    if(parseInt(message_id) <= parseInt(last_read))						// Hiding read post
+	    if(parseInt(message_id) < 1000000000)							// There are some weird hidden post with id over 1400000000 (aparently purposeless)
 	    {
-		message_display = "none";
-		post_resume_display = "block";
-	    }
-	    else
-	    {
-		if(parseInt(message_id) < 1000000000)							// There are some weird hidden post with id over 1400000000 (aparently purposeless)
+		if(parseInt(message_id) <= parseInt(last_read))						// Hiding read post
+		{
+		    message_display = "none";
+		    post_resume_display = "block";
+		}
+		else
 		{
 		    message_display = "block";								// Showing unread post
 		    post_resume_display = "none";
@@ -158,6 +161,8 @@ function change_topic_page(doc_element, topic_id)							// Apply extension chang
 			new_last_read = parseInt(message_id);
 		    }
 		}
+	    }else{
+		element[counter].parentNode.parentNode.parentNode.style.display = "none";		// Hiding weird hidden post
 	    }
 	    
 	    post_resume = "<table width='100%' border = '0'><tr><td><b>" + author_name + "</b>: " +	// Post resume for hiding post div
@@ -201,10 +206,10 @@ function change_topic_page(doc_element, topic_id)							// Apply extension chang
 	}
     }
     
-    if(parseInt(last_read) < new_last_read){
+    if(parseInt(last_read) < new_last_read)
+    {
 	localStorage.setItem(username + "_T_" + topic_id + "_LPo", new_last_read);			// Setting last read post
     }
-    
 }
 
 function embed_youtube_links(element)
@@ -268,19 +273,19 @@ function btc_address_to_link(element)
     var i;
     var string_index2, string_index3, string_length;
     
-    searchLinks(element, a_index_array);								// read positions of all links (content between <a  and </a>)
+    searchLinks(element, a_index_array);								// Reading positions of all links (content between <a  and </a>)
     
-    string_index = element.innerHTML.indexOf("1");							//Search and replace all Bitcoin address with link to blockchain.info
+    string_index = element.innerHTML.indexOf("1");							// Searfching for next address candidate (starts with 1 or 3)
     string_index3 = element.innerHTML.indexOf("3");
     if(string_index3 < string_index){
 	string_index = string_index3;
     }
     
     while(string_index >= 0){
-	string_content = element.innerHTML.substring(string_index, string_index + 27);
-	if (!patt.test(string_content))
+	string_content = element.innerHTML.substring(string_index, string_index + 27);			// Getting 27 character of address candidate
+	if (!patt.test(string_content))									// Proving pattern (alphanumeric characters only) in address candidate
 	{
-	    for(i = 28; i <= 34; i++)
+	    for(i = 28; i <= 34; i++)									// Searching address candidate end
 	    {
 		string_content = element.innerHTML.substring(string_index, string_index + i);
 		if (patt.test(string_content))
@@ -291,11 +296,11 @@ function btc_address_to_link(element)
 	    string_length = i - 1;
 	    string_content = element.innerHTML.substring(string_index, string_index + string_length)
 	    
-	    if(!between(string_index, a_index_array))
+	    if(!between(string_index, a_index_array))							// Proving that address is not part of a link
 	    {
-		string_content = "<a href='https://blockchain.info/address/" + string_content +
+		string_content = "<a href='https://blockchain.info/address/" + string_content +		// Inserting link code
 		    "' target='_blank'>" + string_content + "</a>";
-		
+		    
 		insert_string_code(element, string_content, string_index, string_index + string_length);
 		
 		searchLinks(element, a_index_array);
@@ -308,7 +313,7 @@ function btc_address_to_link(element)
 	    string_content = "N";
 	}
 	
-	string_index2 = element.innerHTML.indexOf("1", string_index + string_content.length);
+	string_index2 = element.innerHTML.indexOf("1", string_index + string_content.length);		// Searfching for next address candidate
 	string_index3 = element.innerHTML.indexOf("3", string_index + string_content.length);
 	if(string_index3 > 0 && (string_index3 < string_index2 || string_index2 < 0))
 	{
@@ -353,6 +358,32 @@ function get_topics_table(doc_element)
     return(topics_table);
 }
 
+function click_body(e)
+{
+    var topic_id;
+    
+    topic_id = local_storage_get_item("overlay_topic_id");
+    
+    if(e.currentTarget.id != "overlay_topic" && topic_id != "0")					// Closing overlay when click out of overlay div
+    {
+	document.getElementById("overlay_topic").innerHTML = "";
+	document.getElementById("overlay_topic").style.display = "none";
+	document.getElementsByTagName("body")[0].style.overflowY = "scroll";
+	document.getElementById("bodyarea").style.opacity = "1";
+	
+	var span_id = document.getElementById("span_topic_link_" + topic_id);
+	if(span_id != null)
+	{
+	    span_id.outerHTML += "<span class=\"proveme_totally_read\" style=\"display:none\">" + topic_id + "</span>";
+	}
+	
+	localStorage.setItem("overlay_topic_id", "0");
+    }
+    
+    e.stopPropagation();
+}
+
+
 function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Insert overlay topic div container
 {
     var string_code, string_code2;
@@ -361,17 +392,24 @@ function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Inse
     var element;
     var counter;
     var td_elements;
-    
     var parent_body = document.getElementsByTagName("body")[0];
+    var footerarea_element = document.getElementById("footerarea");
+    
     parent_body.style.overflowY = "hidden";								// Prevent scrolling while reading overlay page
-	
-	string_code = "<div id=\"overlay_topic\" style=\"border:3px solid;" +				// Inserting overlay div
-	    "border-color:#FFFFFF; position:fixed; display:none;\"></div>";
-	insert_string_code(parent_body, string_code, parent_body.innerHTML.length - 1, parent_body.innerHTML.length - 1);
+	if(document.getElementById("overlay_topic") == null){
+	    string_code = "<div id=\"overlay_topic\" tabindex=\"0\" style=\"border:3px solid;" +		// Inserting overlay div
+		"border-color:#FFFFFF; position:fixed; display:none;\"></div>";
+	    
+	    footerarea_element.outerHTML += string_code;
+	}
     
     overlay_topic_div = document.getElementById("overlay_topic");
+    
     if(overlay_topic_div != null)
     {
+	parent_body.addEventListener("click", click_body, false);
+	overlay_topic_div.addEventListener("click", click_body, false);
+	
 	insert_footer(doc_element);
 	changeStyles(doc_element);
 	body_element = doc_element.getElementsByTagName("body")[0];
@@ -414,7 +452,8 @@ function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Inse
 	    "document.getElementsByTagName(\"body\")[0].style.overflowY = \"scroll\";" +
 	    "document.getElementById(\"bodyarea\").style.opacity = \"1\";" +
 	    "var span_id = document.getElementById(\"span_topic_link_" + topic_id + "\");" +
-	    "span_id.outerHTML += \"<span class=\\\"proveme_totally_read\\\" style=\\\"display:none\\\">" + topic_id + "</span>\";";
+	    "span_id.outerHTML += \"<span class=\\\"proveme_totally_read\\\" style=\\\"display:none\\\">" + topic_id + "</span>\"; " +
+	    "localStorage.setItem(\"overlay_topic_id\", \"0\")";
 	
 	var string_code1 = "<span align=\"center\" style=\"color:#996633; background-color:white; ";
 	var string_code2 = "onclick='" + close_overlay_function + "'><b>";
@@ -453,6 +492,8 @@ function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Inse
 	
 	overlay_topic_div.innerHTML = body_element.innerHTML;
 	overlay_topic_div.style.display = "";
+	overlay_topic_div.focus();
+	localStorage.setItem("overlay_topic_id", topic_id);
     }
 }
 
@@ -469,21 +510,20 @@ function convert_link_tag_to_span_onclik(element, onclick_function_1, onclick_fu
     var string_index;
     var topic_target_page, topic_id;
     
-    a_elements = element.getElementsByTagName("a");
+    a_elements = element.getElementsByTagName("a");							// Getting all <a ...> elements
+    
     counter = 0;
     limit_counter = 0;
-    while(a_elements[counter] != null){
+    while(a_elements[counter] != null){									// for each link in element
 	a_href = a_elements[counter].href;
-	
 	a_class = a_elements[counter].className;
-	
 	a_parent = a_elements[counter].parentNode;
 	a_parent_class = a_parent.className;
 	counter2 = 0;
-	while(counter2 <= 5)
+	while(counter2 <= 5)										// Searching for class "ignored_topic"
 	{
 	    if(a_parent_class.indexOf("ignored_topic") >= 0){
-		span_link_color = link_ignored_color;
+		span_link_color = link_ignored_color;							// Setting color of ignored_topic
 		break;
 	    }
 	    a_parent = a_parent.parentNode;
@@ -491,21 +531,21 @@ function convert_link_tag_to_span_onclik(element, onclick_function_1, onclick_fu
 	    counter2++;
 	}
 	
-	if(a_class.length > 0){
+	if(a_class.length > 0){										// Setting class for new span
 	    a_class = "class=\"" + a_class + "\"";
 	}
 	
-	a_innerHTML = a_elements[counter].innerHTML;
+	a_innerHTML = a_elements[counter].innerHTML;							// ontent of link as content of new span
 	
-	string_index = a_href.indexOf("?topic=") + 7;
+	string_index = a_href.indexOf("?topic=") + 7;							// Getting topic target (topic_id and message)
 	topic_target_page = a_href.substring(string_index);
-	topic_id = a_href.substring(string_index, a_href.indexOf(".", string_index));
-	string_content = "<span id=\"span_topic_link_" + topic_id + "\" " + a_class +
+	topic_id = a_href.substring(string_index, a_href.indexOf(".", string_index));			// Getting topic id
+	string_content = "<span id=\"span_topic_link_" + topic_id + "\" " + a_class +			// Span content (topic_id bettween onclick_function_1 and onclick_function_2)
 	    " onclick='" + onclick_function_1 + topic_target_page + onclick_function_2 + "' " +
 	    "style=\"cursor:pointer;color:" + span_link_color + ";\">" + a_innerHTML + "</span>";
 	
-	a_elements[counter].outerHTML = a_elements[counter].outerHTML + string_content;
-	a_elements[counter].style.display = "none";
+	a_elements[counter].outerHTML = a_elements[counter].outerHTML + string_content;			// Inserting new span
+	a_elements[counter].style.display = "none";							// Hidding original link
 
 	counter++;
 	
@@ -601,7 +641,7 @@ function change_child_boards_table(table_element)
 		string_index2 = td_elements[0].innerHTML.indexOf(".", string_index);
 		var board_id = td_elements[0].innerHTML.substring(string_index, string_index2);
 		
-		cascade = localStorage.getItem(username + "_B_" + board_id + "_CBo");			// Reading cascade state
+		cascade = local_storage_get_item(username + "_B_" + board_id + "_CBo");			// Reading cascade state
 		if(cascade != "true"){
 		    cascade_text = "<span style=\"cursor:pointer;\">" + symbol_box + "<b> cascade</b></span>";
 		}else{
@@ -654,7 +694,7 @@ function change_topics_table(table_element, board_id)
     
     tr_elements = table_element.getElementsByTagName("tr");
     
-    topics_type = localStorage.getItem(username + "_B_" + board_id + "_UnO");				// Reading unread only state
+    topics_type = local_storage_get_item(username + "_B_" + board_id + "_UnO");				// Reading unread only state
     if(topics_type == null){
 	localStorage.setItem(username + "_B_" + board_id + "_UnO", "unread");				// Setting default value ("unread")
 	topics_type = "unread";
@@ -710,8 +750,6 @@ function change_topics_table(table_element, board_id)
 	    string_index2 = td_elements[2].innerHTML.indexOf(".", string_index + 7);
 	    topic_id = td_elements[2].innerHTML.substring(string_index + 7, string_index2);
 	    
-	    
-	    
 	    search_string = "?topic=" + topic_id + ".msg";
 	    string_index = td_elements[2].innerHTML.indexOf(search_string, string_index2);		// Getting new post id from "new" image link (if exist)
 	    if(string_index > 0){
@@ -735,7 +773,7 @@ function change_topics_table(table_element, board_id)
 		
 	    }
 	    
-	    last_read = localStorage.getItem(username + "_T_" + topic_id + "_LPo");
+	    last_read = local_storage_get_item(username + "_T_" + topic_id + "_LPo");
 	    if(last_read == null)									// Save native last post id as extension last read
 	    {
 		localStorage.setItem(username + "_T_" + topic_id + "_LPo", new_last_read);
@@ -743,9 +781,8 @@ function change_topics_table(table_element, board_id)
 	    }
 	    
 	    insert_string_code(td_elements[2], "msg"+last_read, string_index2 + 1, string_index2 + 2);	// Change topic link to a span with onclick target to last read post
-	    var function_page = "this.innerHTML = this.innerHTML + \"<span id=\\\"mark_read_span_" + topic_id +
-		"\\\" style=\\\"display:pointer;\\\">" + symbol_loading + "</span>" +
-		"<div class=\\\"mark_read_span_loading_mark_text\\\" style=\\\"display: none;\\\">";
+	    var function_page = "this.innerHTML = \"<span id=\\\"mark_read_span_" + topic_id +"\\\">" + symbol_loading + 
+		"</span>\" + this.innerHTML + \"<div class=\\\"mark_read_span_loading_mark_text\\\" style=\\\"display: none;\\\">";
 	    var function_page_2 = "</div><div id=\\\"mark_read_span_delete_mark_" + topic_id +
 		"\\\" style=\\\"display: none;\\\">" + board_id + "</div>\";";
 	    convert_link_tag_to_span_onclik(td_elements[2], function_page, function_page_2, 100);
@@ -846,7 +883,7 @@ function totally_read(tr_element)									// Determine if a topic was already to
 	search_string = "?topic=" + topic_id + ".msg";
 	string_index = td_elements[2].innerHTML.indexOf(search_string, string_index2);			// Getting new post id from "new" image link (if exist)
 	if(string_index < 0){										// "new" image not found
-	    var last_read = localStorage.getItem(username + "_T_" + topic_id + "_LPo");
+	    var last_read = local_storage_get_item(username + "_T_" + topic_id + "_LPo");
 	    if(last_read == null){
 		return(true);
 	    }else{
@@ -855,6 +892,7 @@ function totally_read(tr_element)									// Determine if a topic was already to
 		    string_index2 = td_elements[6].innerHTML.indexOf("#new", string_index);
 		    var last_post = td_elements[6].innerHTML.substring(string_index + search_string.length, string_index2);
 		    if(parseInt(last_post) > parseInt(last_read)){
+			change_span_topic_link(tr_element, topic_id, last_read);
 			return(false);
 		    }else{
 			return(true);
@@ -862,6 +900,27 @@ function totally_read(tr_element)									// Determine if a topic was already to
 		}else{
 		    return(true);
 		}
+	    }
+	}
+    }
+}
+
+function change_span_topic_link(tr_element, topic_id, last_read)
+{
+    var span_element;
+    var string_index, string_index2;
+    
+    span_element = get_element_with_string_in_attribute(tr_element, "tag", "span", "span_topic_link_" + topic_id, "id", 0);
+    if(span_element != null)
+    {
+	string_index = span_element.outerHTML.indexOf(".msg");
+	if(string_index >= 0)
+	{
+	    string_index = string_index + 4;
+	    string_index2 = span_element.outerHTML.indexOf("<", string_index);
+	    if(string_index2 > string_index)
+	    {
+		span_element.outerHTML = span_element.outerHTML.substring(0, string_index) + last_read + span_element.outerHTML.substring(string_index2);
 	    }
 	}
     }
@@ -915,7 +974,8 @@ function call_topic_page(topic_id, remove_row, insert_overlay_topic)
 {
     var xmlhttp=new XMLHttpRequest();
     
-    xmlhttp.onreadystatechange=function(){								// On ready function for page
+    xmlhttp.onreadystatechange=function()								// On ready function for page
+    {
 	if (xmlhttp.readyState==4 && xmlhttp.status==200){
 	    var doc_element_return = document.implementation.createHTMLDocument("example");
 	    doc_element_return.documentElement.innerHTML = xmlhttp.responseText;			// Convert html code response to HTML DOM element object
@@ -938,28 +998,39 @@ function call_topic_page(topic_id, remove_row, insert_overlay_topic)
 		
 		span_element.parentNode.removeChild(span_element);					// Removing mark read button span element
 		span_element = document.getElementById("mark_read_span_" + topic_id);
-		if(span_element != null){
+		if(span_element != null)
+		{
 		    span_element.parentNode.removeChild(span_element);
 		}
 		
-		var new_image_element = td_element.getElementsByClassName("newimg")[0];
-		if(new_image_element != null){
-		    new_image_element.parentNode.parentNode.removeChild(new_image_element.parentNode);	// Removing new image (link and image) element
+		var new_image_element = td_element.getElementsByClassName("newimg");
+		if(new_image_element[0] != null)
+		{
+		    new_image_element[0].parentNode.parentNode.removeChild(new_image_element[0].parentNode);	// Removing new image (link and image) element
+		    if(new_image_element[0] != null)
+		    {
+			new_image_element[0].parentNode.parentNode.removeChild(new_image_element[0].parentNode);// Removing new image (span) element
+		    }
 		}
+		
 		var b_index = td_element.innerHTML.indexOf("<b>");
-		if(b_index >= 0){
+		if(b_index >= 0)
+		{
 		    insert_string_code(td_element, "", b_index, b_index+3);				// Removing <b> tag
 		}
-		if(remove_row == "true"){								// Hide table row element
+		if(remove_row == "true")
+		{											// Hide table row element
 		    tr_element.style.display="none";
 		}
 		var unread_post_message_element = document.getElementById("unread_post_message_" + topic_id)
-		if(unread_post_message_element != null){						// Removing "(unread posts)" message
+		if(unread_post_message_element != null)
+		{						// Removing "(unread posts)" message
 		    unread_post_message_element.parentNode.removeChild(unread_post_message_element);
 		}
 	    }
 	    
-	    if(insert_overlay_topic){
+	    if(insert_overlay_topic)
+	    {
 		change_page_and_insert_overlay_topic(doc_element_return, topic_id);
 	    }
 	}
@@ -967,7 +1038,7 @@ function call_topic_page(topic_id, remove_row, insert_overlay_topic)
     
     var topic_url = "index.php?topic=" + topic_id;
     if(!insert_overlay_topic){
-	topic_url += ".msg99999999999";
+	topic_url += ".msg" + max_msg_id;
     }
     
     xmlhttp.open("GET", topic_url, true);								// Opening child board page request
@@ -1067,7 +1138,7 @@ function window_timer()
 	    var board_id_element = document.getElementById("mark_read_span_delete_mark_" + topic_id);
 	    if(board_id_element != null){
 		board_id = board_id_element.textContent;
-		if(localStorage.getItem(username + "_B_" + board_id + "_UnO") == "unread"){
+		if(local_storage_get_item(username + "_B_" + board_id + "_UnO") == "unread"){
 		    remove = "true";
 		}
 		board_id_element.parentNode.removeChild(board_id_element);
@@ -1135,7 +1206,7 @@ function window_timer()
 		board_id = table_element.outerHTML.substring(string_index + 18, table_element.outerHTML.indexOf("\"", string_index + 18));
 	    
 		if(totally_read(tr_element)){
-		    if(localStorage.getItem(username + "_B_" + board_id + "_UnO") == "unread"){
+		    if(local_storage_get_item(username + "_B_" + board_id + "_UnO") == "unread"){
 			tr_element.style.display = "none";
 		    }
 		}else{
@@ -1175,7 +1246,7 @@ function printf(string){										// Short function for console log printings de
     console.log(string);
 }
 
-function between(number, array)
+function between(number, array)										// Determine if a number is bettween limits in array
 {
     for(i = 0; i < array.length; i = i + 2){
 	if(array[i] != undefined && array[i+1] != undefined){
@@ -1313,7 +1384,7 @@ function insert_footer(doc_element)
     {
 	var spanish_thread = "<a href=\"https://bitcointalk.org/index.php?topic=708721.0\" target=\"_blank\">Spanish Thread</a>";
 	var english_thread = "<a href=\"https://bitcointalk.org/index.php?topic=708721.0\" target=\"_blank\">English Thread</a>";	// FIXME
-	var download_link = "<a href=\"https://bitcointalk.org/index.php?topic=708721.0\" target=\"_blank\">Download source</a>";	// FIXME
+	var download_link = "<a href=\"https://github.com/fernar1os/A-Bitcointalk-Extension\">Download source</a> (\"Download ZIP\" in bottom left corner)";
 	
 	footerarea_element.outerHTML += "<center><div style=\"color:" + font_color +
 	    ";border:1px; border-style:solid; border-color:" + font_color + "; padding:4px;\"> " +
@@ -1326,9 +1397,74 @@ function insert_footer(doc_element)
     }
 }
 
+function get_date_today()										// Date number format: AAAAMMDD
+{
+    var date_today = new Date();
+    var year = date_today.getFullYear();
+    var month = date_today.getMonth();
+    var day = date_today.getDate();
+    
+    var date = (((parseInt(year)*100) + parseInt(month)) * 100) + parseInt(day);
+    
+    return(date);
+}
+
+function local_storage_get_item(key)
+{
+    localStorage.setItem(key + "_date", get_date_today());						// Saving key access date
+    return(localStorage.getItem(key));
+}
+
+function clean_local_storage()	// FIXME: cambiar los set de localStorage a la función que guarda la fecha de acceso
+{
+    var counter = 0;
+    var register_key_string;
+    var date_today;
+    
+    clean_storage_date_reg = localStorage.getItem("clean_storage_date");
+    date_today = get_date_today();
+    
+    if(clean_storage_date_reg != null)									// Cleaning old keys and data (not accessed for a while)
+    {
+	if(date_today - parseInt(clean_storage_date_reg) > days_to_clean_storage)			// Cleaning old keys if date of last cleaning is older that 'days_to_clean_storage'
+	{
+	    counter = 0;
+	    while(localStorage.key(counter) != null)							// Walk through all localStorage data
+	    {
+		register_key_string = localStorage.key(counter) + "_date";
+		register_date = localStorage.getItem(register_key_string);				// Registry access date
+		
+		if(localStorage.key(counter).indexOf("_date") < 0)					// If key is not an access date
+		{
+		    if(register_date != null)
+		    {
+			if(date_today - parseInt(register_date) > days_to_clean_storage)		// Cleaning this key if access date is older that 'days_to_clean_storage'
+			{
+			    localStorage.removeItem(localStorage.key(counter));				// Removing key data
+			    localStorage.removeItem(register_key_string);				// Removing access date for this key
+			}
+		    }
+		    else
+		    {
+			localStorage.setItem(register_key_string, date_today);				// Setting new date for this key
+		    }
+		}
+		counter++;
+	    }
+	    localStorage.setItem("clean_storage_date", date_today);					// Restarting clean_storage_date
+	}
+    }
+    else
+    {
+	localStorage.setItem("clean_storage_date", date_today);						// Initializing clean_storage_date
+    }
+}
+
 window.addEventListener("load",window_onload,false);							// Listening current page on load event
 
 setTimeout(window_timer, 1000);										// Start timer function (every second)
+
+clean_local_storage();
 
 
 /*
@@ -1345,6 +1481,8 @@ setTimeout(window_timer, 1000);										// Start timer function (every second)
  * cascade forums and topics
  * dark style
  * 
+ * 0.3:
+ * overlay topic
  *  
  * TODO:
  * bitcoin price block
