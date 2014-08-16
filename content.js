@@ -22,6 +22,10 @@
  * NOTE: This is an unofficial bitcointalk browser extension (for Google
  * Chrome). This project is not related with bitcointalk.org administration.
  * 
+ * Help, comments and feedback:
+ * 	English Thread: 
+ * 	Spanish Thread: https://bitcointalk.org/index.php?topic=708721.0
+ * 
 */
 
 var change_style = true;
@@ -1415,7 +1419,7 @@ function local_storage_get_item(key)
     return(localStorage.getItem(key));
 }
 
-function clean_local_storage()	// FIXME: cambiar los set de localStorage a la función que guarda la fecha de acceso
+function clean_local_storage()
 {
     var counter = 0;
     var register_key_string;
