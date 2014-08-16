@@ -28,12 +28,11 @@
  * 
 */
 
-var change_style = true;
-
 var username;
 var url_vars;
 var time_counter = 0;
 
+var change_style;
 var max_msg_id = 99999999999;
 var days_to_clean_storage = 30;
 
@@ -46,6 +45,36 @@ var link_color;
 var link_ignored_color;
 var bg_color;
 var font_color;
+
+username = document.getElementById("hellomember");							// Getting user name
+if(username != null)
+{
+    username = document.getElementById("hellomember").innerHTML;
+    username = username.substring(username.indexOf("<b>") + 3, username.indexOf("</b>"));
+}
+else
+{
+    username = "anonuser";
+}
+
+change_style = local_storage_get_item(username + "_S_dark_style");					// Getting dark_style config variable
+
+if(change_style != null)
+{
+    if(change_style == "true")
+    {
+	change_style = true;										// Changing default style
+    }
+    else
+    {
+	change_style = false;
+    }
+}
+else
+{
+    change_style = true;
+    localStorage.setItem(username + "_S_dark_style", "true");
+}
 
 if(change_style)
 {
@@ -60,17 +89,6 @@ else
     link_ignored_color = "#ACABAD";
     bg_color = "#E5E5E8";
     font_color = "#000000";
-}
-
-username = document.getElementById("hellomember");							// Getting user name
-if(username != null)
-{
-    username = document.getElementById("hellomember").innerHTML;
-    username = username.substring(username.indexOf("<b>") + 3, username.indexOf("</b>"));
-}
-else
-{
-    username = "anonuser";
 }
 
 url_vars = window.location.search;									// Reading current url
@@ -1389,8 +1407,28 @@ function insert_footer(doc_element)
 	var spanish_thread = "<a href=\"https://bitcointalk.org/index.php?topic=708721.0\" target=\"_blank\">Spanish Thread</a>";
 	var english_thread = "<a href=\"https://bitcointalk.org/index.php?topic=708721.0\" target=\"_blank\">English Thread</a>";	// FIXME
 	var download_link = "<a href=\"https://github.com/fernar1os/A-Bitcointalk-Extension\">Download source</a> (\"Download ZIP\" in bottom right corner)";
+	var dark_style;
 	
-	footerarea_element.outerHTML += "<center><div style=\"color:" + font_color +
+	dark_style = local_storage_get_item(username + "_S_dark_style");				// Reading dark style state
+	if(dark_style != "true"){
+	    dark_style = "<span style=\"cursor:pointer;\">" + symbol_box + "<b> dark style</b></span>";
+	}else{
+	    dark_style = "<span style=\"cursor:pointer;\">" + symbol_ready + "<b> dark style</b></span>";
+	}
+	
+	function_toggle_style = "" +									// Toggle dark style
+	    "if(localStorage.getItem(\"" + username + "_S_dark_style\") != \"true\"){" +
+		"localStorage.setItem(\"" + username + "_S_dark_style\", \"true\");" +
+	    "}else{" +
+		"localStorage.setItem(\"" + username + "_S_dark_style\", \"false\");" +
+	    "}" +
+	    "location.reload();";
+		
+	string_code = "<center><div onclick='" + function_toggle_style + "' style=\"color:" + font_color +
+	    ";border:1px; border-style:solid; border-color:" + font_color + 
+	    "; padding:4px;\"> " + dark_style + "</div></center>";
+	
+	footerarea_element.outerHTML += string_code + "<center><div style=\"color:" + font_color +
 	    ";border:1px; border-style:solid; border-color:" + font_color + "; padding:4px;\"> " +
 	    "<span style=\"white-space:nowrap;\"><b>A Bitcointalk Extension</b> by fernarios</span> | " +
 	    "<span style=\"white-space:nowrap;\">Help, comments and feedback: " + english_thread + " - " + spanish_thread + "</span> | " +
