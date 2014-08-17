@@ -72,18 +72,18 @@ if(change_style != null)
 }
 else
 {
-    change_style = true;
+    change_style = true;										// Default value for style variable
     localStorage.setItem(username + "_S_dark_style", "true");
 }
 
-if(change_style)
+if(change_style)											// Dark style
 {
     link_color = "#476C8E";
     link_ignored_color = "#585858";
     bg_color = "#0A2229";
     font_color = "#B4B4B4";
 }
-else
+else													// Original style
 {
     link_color = "#476C8E";
     link_ignored_color = "#ACABAD";
@@ -146,7 +146,7 @@ function change_topic_page(doc_element, topic_id)							// Apply extension chang
 	    
 	    embed_youtube_links(post_element);								// Youtube embed
 	    
-	    btc_address_to_link(post_element);									// Bitcoin Address detection and linking to blockchain.info
+	    btc_address_to_link(post_element);								// Bitcoin Address detection and linking to blockchain.info
 	    
 	    
 	    function_toggle = "" +									// Hide post toggle function
@@ -419,7 +419,7 @@ function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Inse
     
     parent_body.style.overflowY = "hidden";								// Prevent scrolling while reading overlay page
 	if(document.getElementById("overlay_topic") == null){
-	    string_code = "<div id=\"overlay_topic\" tabindex=\"0\" style=\"border:3px solid;" +		// Inserting overlay div
+	    string_code = "<div id=\"overlay_topic\" tabindex=\"0\" style=\"border:3px solid;" +	// Inserting overlay div
 		"border-color:#FFFFFF; position:fixed; display:none;\"></div>";
 	    
 	    footerarea_element.outerHTML += string_code;
@@ -494,7 +494,7 @@ function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Inse
 	
 	var function_page = "this.innerHTML = \"[" + symbol_loading + "]<div class=\\\"mark_read_span_loading_mark_text\\\" " +
 	    "style=\\\"display: none;\\\">";
-	convert_link_tag_to_span_onclik(element, function_page, "</div>\";", 1000);			// Changing page links
+	convert_link_tag_to_span_onclik(element, function_page, "</div>\";", 1000);			// Changing page links at top
 	
 	element = get_element_with_string_in_attribute(body_element, "class", "middletext", "Pages:", "textContent", 1);
 	
@@ -502,7 +502,7 @@ function change_page_and_insert_overlay_topic(doc_element, topic_id)					// Inse
 	    "cursor:pointer;\" " + string_code2 + close_button_tex + string_code3;
 	insert_string_code(element, string_code, 0, 0);
 	
-	convert_link_tag_to_span_onclik(element, function_page, "</div>\";", 1000);			// Changing page links
+	convert_link_tag_to_span_onclik(element, function_page, "</div>\";", 1000);			// Changing bottom page links
 	
 	element = body_element.getElementsByTagName("a");
 	counter = 0;
@@ -739,7 +739,7 @@ function change_topics_table(table_element, board_id)
 		"\"<center><b><span id=\\\"unread_only_symbol_" + board_id + "\\\">" + symbol_loading + "</span> unread only</b></center>" +
 		"<div class=\\\"unread_only_button_loading_mark_text\\\" style=\\\"display: none;\\\">" + board_id + "</div>\";";
 	    
-	    unread_only_button_code = "";								// Inserting unread only button
+	    unread_only_button_code = "";								// Inserting unread only and reload buttons
 	    unread_only_button_code += "<span id=\"unread_only_button_" + board_id +
 		"\" style=\"color:#FFFFFF;cursor:pointer;\" onclick='" + function_unread_only_toggle + "'>" +
 		"<b><span id=\"unread_only_symbol_" + board_id + "\">" + unread_only_symbol + "</span> unread only</b></span>";
@@ -927,7 +927,7 @@ function totally_read(tr_element)									// Determine if a topic was already to
     }
 }
 
-function change_span_topic_link(tr_element, topic_id, last_read)
+function change_span_topic_link(tr_element, topic_id, last_read)					// Change span target to last read post
 {
     var span_element;
     var string_index, string_index2;
@@ -1027,11 +1027,11 @@ function call_topic_page(topic_id, remove_row, insert_overlay_topic)
 		
 		var new_image_element = td_element.getElementsByClassName("newimg");
 		if(new_image_element[0] != null)
-		{
-		    new_image_element[0].parentNode.parentNode.removeChild(new_image_element[0].parentNode);	// Removing new image (link and image) element
+		{											// Removing new image (link and image) element
+		    new_image_element[0].parentNode.parentNode.removeChild(new_image_element[0].parentNode);
 		    if(new_image_element[0] != null)
-		    {
-			new_image_element[0].parentNode.parentNode.removeChild(new_image_element[0].parentNode);// Removing new image (span) element
+		    {											// Removing new image (span) element
+			new_image_element[0].parentNode.parentNode.removeChild(new_image_element[0].parentNode);
 		    }
 		}
 		
@@ -1046,7 +1046,7 @@ function call_topic_page(topic_id, remove_row, insert_overlay_topic)
 		}
 		var unread_post_message_element = document.getElementById("unread_post_message_" + topic_id)
 		if(unread_post_message_element != null)
-		{						// Removing "(unread posts)" message
+		{											// Removing "(unread posts)" message
 		    unread_post_message_element.parentNode.removeChild(unread_post_message_element);
 		}
 	    }
@@ -1406,7 +1406,7 @@ function insert_footer(doc_element)
     {
 	var spanish_thread = "<a href=\"https://bitcointalk.org/index.php?topic=708721.0\" target=\"_blank\">Spanish Thread</a>";
 	var english_thread = "<a href=\"https://bitcointalk.org/index.php?topic=708721.0\" target=\"_blank\">English Thread</a>";	// FIXME
-	var download_link = "<a href=\"https://github.com/fernar1os/A-Bitcointalk-Extension\">Download source</a> (\"Download ZIP\" in bottom right corner)";
+	var download_link = "<a href=\"https://github.com/fernar1os/A-Bitcointalk-Extension\" target=\"_blank\">Download source</a> (\"Download ZIP\" in bottom right corner)";
 	var dark_style;
 	
 	dark_style = local_storage_get_item(username + "_S_dark_style");				// Reading dark style state
@@ -1428,7 +1428,7 @@ function insert_footer(doc_element)
 	    ";border:1px; border-style:solid; border-color:" + font_color + 
 	    "; padding:4px;\"> " + dark_style + "</div></center>";
 	
-	footerarea_element.outerHTML += string_code + "<center><div style=\"color:" + font_color +
+	footerarea_element.outerHTML += string_code + "<center><div style=\"color:" + font_color +	// Inserting footer
 	    ";border:1px; border-style:solid; border-color:" + font_color + "; padding:4px;\"> " +
 	    "<span style=\"white-space:nowrap;\"><b>A Bitcointalk Extension</b> by fernarios</span> | " +
 	    "<span style=\"white-space:nowrap;\">Help, comments and feedback: " + english_thread + " - " + spanish_thread + "</span> | " +
